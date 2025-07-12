@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 8px;
+      font-family: sans-serif;
+    }
+    .toolbar button {
+      margin: 4px;
+      font-size: 14px;
+    }
+    .editor {
+      min-height: 300px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button onclick="format('bold')">Bold</button>
+    <button onclick="format('italic')">Italic</button>
+    <button onclick="format('strikeThrough')">Strike</button>
+    <button onclick="format('insertUnorderedList')">• List</button>
+    <button onclick="format('insertOrderedList')">1. List</button>
+    <button onclick="format('justifyLeft')">←</button>
+    <button onclick="format('justifyCenter')">↔</button>
+    <button onclick="format('justifyRight')">→</button>
+    <button onclick="insertLink()">🔗</button>
+  </div>
+
+  <div contenteditable="true" class="editor" id="editor"></div>
+
+  <script>
+    function format(command) {
+      document.execCommand(command, false, null);
+    }
+    function insertLink() {
+      const url = prompt("Enter link:");
+      if (url) {
+        document.execCommand("createLink", false, url);
+      }
+    }
+    function getContent() {
+      const html = document.getElementById("editor").innerHTML;
+      TextChannel.postMessage(html);
+      return html;
+    }
+  </script>
+</body>
+</html>
+
