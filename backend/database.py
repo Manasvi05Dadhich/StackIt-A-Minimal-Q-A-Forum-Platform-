@@ -1,18 +1,28 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+import mysql.connector
+from mysql.connector import Error
 
-DATABASE_URL = "mysql+pymysql://root:Him@nshu12@localhost:3306/stackit"
+# Database configuration
+DB_CONFIG = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': '',
+    'database': 'stackit'
+}
 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = declarative_base()
-
-def get_db():
-    db = SessionLocal()
+def get_connection():
     try:
-        yield db
-    finally:
-        db.close()
+        conn = mysql.connector.connect(**DB_CONFIG)
+        return conn
+    except Error as e:
+        print(f"Error connecting to database: {e}")
+        return None
 
+# Legacy connection for backward compatibility
+try:
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor(dictionary=True)
+    print("Database connected successfully")
+except Error as e:
+    print(f"Error connecting to database: {e}")
+    conn = None
+    cursor = None 
