@@ -5,25 +5,17 @@ from routes.auth_routes import decode_token
 
 router = APIRouter()
 
-# ✅ Token decoding with debug
 def get_user_id(request: Request):
     token = request.headers.get("Authorization", "")
-    print("📦 Raw Authorization Header:", token)
-
-    token = token.replace("Bearer ", "")
-    print("🔑 Token after cleaning:", token)
-
+    token = token.replace("Bearer ", "").strip()
     user_id = decode_token(token)
-    print("✅ Decoded user ID:", user_id)
-
     if not user_id:
         raise HTTPException(status_code=401, detail="Unauthorized")
     return user_id
 
-# ✅ POST /questions/ — Create a new question
 @router.post("/")
 def create_question(request: Request, question: QuestionCreate):
-    user_id = get_user_id(request)  # 🔐 Get logged-in user
+    user_id = get_user_id(request)
 
     cursor.execute(
         "INSERT INTO questions (user_id, title, description) VALUES (%s, %s, %s)",
@@ -31,7 +23,6 @@ def create_question(request: Request, question: QuestionCreate):
     )
     question_id = cursor.lastrowid
 
-    # Handle tags
     for tag in question.tags:
         cursor.execute("SELECT id FROM tags WHERE name = %s", (tag,))
         tag_row = cursor.fetchone()
@@ -49,14 +40,12 @@ def create_question(request: Request, question: QuestionCreate):
     conn.commit()
     return {"message": "Question created", "question_id": question_id}
 
-# ✅ GET /questions/ — Fetch all questions
 @router.get("/")
 def get_all_questions():
     cursor.execute("SELECT * FROM questions")
     questions = cursor.fetchall()
     return {"questions": questions}
 
-# ✅ GET /questions/{question_id} — Fetch single question by ID
 @router.get("/{question_id}")
 def get_question_by_id(question_id: int):
     cursor.execute("SELECT * FROM questions WHERE id = %s", (question_id,))
