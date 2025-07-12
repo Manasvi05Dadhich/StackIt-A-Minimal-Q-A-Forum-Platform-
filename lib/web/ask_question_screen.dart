@@ -1,7 +1,8 @@
-// Final AskQuestionScreen with full toolbar and font size dropdown
 import 'package:flutter/material.dart';
 import 'package:html_editor_enhanced/html_editor.dart';
 import 'package:stackit/components/custom_main.dart';
+
+import 'package:stackit/services/api_services.dart';
 
 class AskQuestionScreen extends StatefulWidget {
   const AskQuestionScreen({super.key});
@@ -25,6 +26,40 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
     });
   }
 
+  Future<void> _submitQuestion() async {
+    final title = titleController.text.trim();
+    final description = await controller.getText();
+
+    if (title.isEmpty || description.isEmpty || tags.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields and add tags')),
+      );
+      return;
+    }
+
+    try {
+      await ApiService.postQuestion(
+        title: title,
+        description: description,
+        tags: tags,
+      );
+
+      if (mounted) {
+        Navigator.pop(context); // Close the dialog/screen
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Question submitted successfully!')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Submit error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to submit question')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,7 +74,7 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
             Text('StackIt', style: TextStyle(color: primaryText)),
             const Spacer(),
             TextButton(
-              onPressed: () {},
+              onPressed: () => Navigator.pop(context),
               child: Text('Home', style: TextStyle(color: primaryDark)),
             ),
             const SizedBox(width: 12),
@@ -180,11 +215,7 @@ class _AskQuestionScreenState extends State<AskQuestionScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () async {
-                      final html = await controller.getText();
-                      debugPrint("Title: \${titleController.text}");
-                      debugPrint("Desc HTML: \$html");
-                    },
+                    onPressed: _submitQuestion,
                     child: const Text(
                       'Submit',
                       style: TextStyle(color: Colors.white),

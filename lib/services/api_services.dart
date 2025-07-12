@@ -1,52 +1,29 @@
+// Submit a new question
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
-import 'package:stackit/components/question.dart';
 
-class ApiService {
-  static const String baseUrl = 'http://localhost:8000'; // or your deployed URL
+Future<void> postQuestion({
+  required String title,
+  required String description,
+  required List<String> tags,
+  String userName = 'User Name', // Default/fallback
+}) async {
+  const String baseUrl =
+      'https://your-api-base-url.com'; // TODO: Replace with your actual base URL
+  final response = await http.post(
+    Uri.parse('$baseUrl/submit-question'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({
+      'title': title,
+      'description': description,
+      'tags': tags,
+      'answers': [], // Optional for now
+      'userName': userName, // Optional for now
+    }),
+  );
 
-  static Future<List<Question>> fetchQuestions() async {
-    final response = await http.get(Uri.parse('$baseUrl/questions'));
-
-    if (response.statusCode == 200) {
-      final List data = json.decode(response.body);
-      return data
-          .map<Question>(
-            (item) => Question(
-              id: item['id'],
-              title: item['title'],
-              description: item['description'] ?? '',
-              tags: item['tags'] != null ? List<String>.from(item['tags']) : [],
-              answers: item['answers'] != null
-                  ? List<String>.from(item['answers'])
-                  : [],
-              userName: item['userName'] ?? '',
-              // Add other fields as necessary
-            ),
-          )
-          .toList();
-    } else {
-      throw Exception('Failed to load questions');
-    }
-  }
-
-  static Future<void> postQuestion(Question question) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/questions'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'id': question.id,
-        'title': question.title,
-        'description': question.description,
-        'tags': question.tags,
-        'answers': question.answers,
-        'userName': question.userName,
-        // Add other fields as necessary
-      }),
-    );
-
-    if (response.statusCode != 201) {
-      throw Exception('Failed to submit question');
-    }
+  if (response.statusCode != 201 && response.statusCode != 200) {
+    throw Exception('Failed to submit question: ${response.body}');
   }
 }

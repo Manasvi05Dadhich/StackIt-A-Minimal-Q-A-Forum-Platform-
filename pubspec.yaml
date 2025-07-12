@@ -71,7 +71,6 @@ flutter:
     - assets/logo.png
     - assets/fonts/inter.ttf
     - assets/fonts/WorkSans.ttf
-    - assets/animation/welcome.json
     - assets/editor.html
     
 
