@@ -1,25 +1,62 @@
-from flask import Blueprint, request, jsonify
-from werkzeug.security import generate_password_hash, check_password_hash
-from utils.database import cursor, conn
-from utils.auth import encode_token
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from passlib.hash import bcrypt
+import jwt
+from datetime import datetime, timedelta
+from database import cursor, conn
 
-auth_bp = Blueprint('auth_bp', __name__)
+router = APIRouter()
+SECRET_KEY = "stackit-secret"
 
-@auth_bp.route('/auth/register', methods=['POST'])
-def register():
-    data = request.get_json()
-    hashed_pw = generate_password_hash(data['password'])
+# ✅ Pydantic models
+class UserSignup(BaseModel):
+    name: str
+    email: str
+    password: str
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+# ✅ Create JWT token
+def create_token(user_id: int):
+    payload = {
+        "sub": user_id,
+        "exp": datetime.utcnow() + timedelta(days=1),
+        "iat": datetime.utcnow()
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+
+# ✅ Decode JWT token
+def decode_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        return payload["sub"]
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+# ✅ Signup route
+@router.post("/signup")
+def signup(user: UserSignup):
+    cursor.execute("SELECT id FROM users WHERE email = %s", (user.email,))
+    if cursor.fetchone():
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    hashed_pw = bcrypt.hash(user.password)
     cursor.execute("INSERT INTO users (name, email, password) VALUES (%s, %s, %s)",
-                   (data['name'], data['email'], hashed_pw))
+                   (user.name, user.email, hashed_pw))
     conn.commit()
-    return jsonify({"message": "User registered successfully"}), 201
+    return {"message": "User registered"}
 
-@auth_bp.route('/auth/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    cursor.execute("SELECT * FROM users WHERE email = %s", (data['email'],))
-    user = cursor.fetchone()
-    if not user or not check_password_hash(user['password'], data['password']):
-        return jsonify({"error": "Invalid credentials"}), 401
-    token = encode_token(user['id'])
-    return jsonify({"token": token}), 200
+# ✅ Login route
+@router.post("/login")
+def login(user: UserLogin):
+    cursor.execute("SELECT id, password FROM users WHERE email = %s", (user.email,))
+    row = cursor.fetchone()
+    if not row or not bcrypt.verify(user.password, row["password"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    token = create_token(row["id"])
+    return {"token": token}

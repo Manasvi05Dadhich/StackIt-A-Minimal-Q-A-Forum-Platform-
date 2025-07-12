@@ -1,28 +1,13 @@
-import mysql.connector
-from mysql.connector import Error
+import pymysql
+from pymysql.cursors import DictCursor
 
-# Database configuration
-DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': '',
-    'database': 'stackit'
-}
+conn = pymysql.connect(
+    host="sql12.freesqldatabase.com",
+    user="sql12789609",
+    password="bzAi83qvxw", 
+    database="sql12789609",
+    port=3306,
+    cursorclass=DictCursor
+)
 
-def get_connection():
-    try:
-        conn = mysql.connector.connect(**DB_CONFIG)
-        return conn
-    except Error as e:
-        print(f"Error connecting to database: {e}")
-        return None
-
-# Legacy connection for backward compatibility
-try:
-    conn = mysql.connector.connect(**DB_CONFIG)
-    cursor = conn.cursor(dictionary=True)
-    print("Database connected successfully")
-except Error as e:
-    print(f"Error connecting to database: {e}")
-    conn = None
-    cursor = None 
+cursor = conn.cursor()
