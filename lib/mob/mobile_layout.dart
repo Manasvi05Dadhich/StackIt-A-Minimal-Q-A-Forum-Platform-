@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import 'package:stackit/components/custom_main.dart';
 
 class MobileLayout extends StatelessWidget {
@@ -15,7 +14,20 @@ class MobileLayout extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Hero illustration
-            Lottie.asset('assets/animation/welcome.json', height: 260),
+            Container(
+              height: 260,
+              width: 260,
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.orange.withOpacity(0.3)),
+              ),
+              child: const Icon(
+                Icons.help_outline,
+                size: 80,
+                color: Colors.orange,
+              ),
+            ),
             const SizedBox(height: 40),
 
             // Logo icon
